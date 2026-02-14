@@ -1,38 +1,42 @@
-# Chimera V5 - FIX Trading System
+# Chimera V5 - VERSION-CONSISTENT FIX Build
 
-**Status:** ✅ Working Build - Ready to Compile
+**Status:** ✅ Single-Version Architecture - No Mixed APIs
 
-## Download
+## CRITICAL CHANGE
 
-**[ChimeraV5.tar.gz](ChimeraV5.tar.gz)** (549 KB)
+**Download this instead:** **[ChimeraV5_CONSISTENT.tar.gz](ChimeraV5_CONSISTENT.tar.gz)** (542 KB)
 
-## What's Inside
+### What Was Wrong Before
 
-- Full FIXSession API (restored from working backup)
-- All governance removed from FIX layer  
-- Correct FIXMessage usage (encode/parseZeroCopy)
-- Missing includes added
-- MSVC-safe CMake
-- Metals only: XAUUSD + XAGUSD
+The previous package had files from DIFFERENT VERSIONS mixed together:
+- FIXConfig expected `tradePort` and `pricePort`
+- But some code used `port`
+- FIXMessage had `encode()` but some code called `serialize()`
+- CTraderFIXClient constructor took NO arguments
+- But main.cpp tried to pass FIXConfig to constructor
+
+**This caused 50+ compile errors from API mismatches.**
+
+### What's Fixed Now
+
+✅ **ALL files from same version**  
+✅ **FIXConfig:** has `tradePort`, `pricePort`, `senderCompID`, etc  
+✅ **FIXSession:** has `setConfig()`, `start(host, port)`, callbacks  
+✅ **FIXMessage:** uses `encode()` and `parseZeroCopy()`  
+✅ **CTraderFIXClient:** default constructor + `setConfig()` + `setOnExec()`  
+✅ **main.cpp:** matches actual API  
 
 ## Build
 
 ```powershell
-# Windows
-tar -xzf ChimeraV5.tar.gz
-cd ChimeraV5
-mkdir build && cd build
-cmake .. -G "Visual Studio 17 2022" -A x64
-cmake --build . --config Release
-```
+# Extract
+tar -xzf ChimeraV5_CONSISTENT.tar.gz
+cd (extracted directory)
 
-```bash
-# Linux
-tar -xzf ChimeraV5.tar.gz
-cd ChimeraV5
+# Build
 mkdir build && cd build
-cmake ..
-make -j4
+cmake .. -G "Visual Studio 2022" -A x64
+cmake --build . --config Release
 ```
 
 ## Requirements
@@ -46,13 +50,20 @@ make -j4
 ```
 main.cpp
     ↓
-ExecutionAuthority (governance - metals only)
+ExecutionAuthority (metals-only governance)
     ↓
-CTraderFIXClient (dual session orchestration)
+CTraderFIXClient
+    ├─ TRADE Session (port 5212)
+    └─ QUOTE Session (port 5211)
     ↓
-FIXSession (pure transport - NO governance)
+FIXSession (clean transport)
     ↓
 FIXSSLTransport
 ```
 
-**Generated:** 2026-02-14
+**All components from ONE consistent codebase.**
+
+---
+
+**Updated:** 2026-02-14 08:12 UTC  
+**Status:** Version-consistent, ready to compile
